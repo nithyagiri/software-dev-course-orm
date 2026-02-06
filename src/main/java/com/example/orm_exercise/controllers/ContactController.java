@@ -1,6 +1,8 @@
 package com.example.orm_exercise.controllers;
 
+import com.example.orm_exercise.models.Address;
 import com.example.orm_exercise.models.Contact;
+import com.example.orm_exercise.repositories.AddressRepository;
 import com.example.orm_exercise.repositories.ContactRepository;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,9 +12,13 @@ import java.util.List;
 @RequestMapping("/contacts")
 public class ContactController {
     private final ContactRepository contactRepository;
+    private final AddressRepository addressRepository;
 
-    public ContactController(ContactRepository contactRepository) {
+    public ContactController(ContactRepository contactRepository,  AddressRepository addressRepository1)
+
+    {
         this.contactRepository = contactRepository;
+        this.addressRepository = addressRepository1;
     }
 
     @GetMapping
@@ -27,6 +33,13 @@ public class ContactController {
 
     @PostMapping
     public Contact createContact(@RequestBody Contact contact) {
+
+        if (contact.getAddresses() != null) {
+            for (Address address : contact.getAddresses()) {
+                address.setContact(contact);
+            }
+        }
+
         return contactRepository.save(contact);
     }
 
@@ -43,5 +56,17 @@ public class ContactController {
     @DeleteMapping("/{id}")
     public void deleteContact(@PathVariable int id) {
         contactRepository.deleteById(id);
+    }
+
+
+
+    // 2️⃣ GET all addresses for a contact
+    @GetMapping("/{contactId}/addresses")
+    public List<Address> getAddressesForContact(@PathVariable int contactId) {
+
+        Contact contact = contactRepository.findById(contactId)
+                .orElseThrow(() -> new RuntimeException("Contact not found"));
+
+        return contact.getAddresses();
     }
 }
